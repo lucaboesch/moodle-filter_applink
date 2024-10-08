@@ -17,7 +17,7 @@
 /**
  * Version details
  *
- * @package    filter_ws
+ * @package    filter_applink
  * @copyright  2019 Dani Palou <dani@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
