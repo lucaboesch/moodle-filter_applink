@@ -14,14 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Tests for filter_applink.
- *
- * @package    filter_applink
- * @category   test
- * @copyright  2019 Dani Palou <dani@moodle.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace filter_applink;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -39,7 +32,7 @@ require_once($CFG->dirroot . '/filter/applink/tests/classes/filter_mock.php');
  * @copyright  2019 Dani Palou <dani@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class filter_applink_testcase extends advanced_testcase {
+final class filter_test extends \advanced_testcase {
     /** @var object The filter plugin object to perform the tests on */
     protected $filter;
 
@@ -54,12 +47,13 @@ class filter_applink_testcase extends advanced_testcase {
      *
      * @return void
      */
-    protected function setUp() {
+    protected function setUp(): void {
+        parent::setUp();
+
         $this->resetAfterTest();
 
-        $this->filter = new filter_applink(context_system::instance(), array());
-        $this->filtermock = new filter_applink_mock(context_system::instance(), array());
-
+        $this->filter = new \filter_applink(\context_system::instance(), []);
+        $this->filtermock = new \filter_applink_mock(\context_system::instance(), []);
 
         $this->defaultscheme = get_config('filter_applink', 'urlscheme');
         if (empty($this->defaultscheme)) {
@@ -70,38 +64,39 @@ class filter_applink_testcase extends advanced_testcase {
     /**
      * Test the data-app-link attribute.
      *
+     * @covers \filter_applink\text_filter::filter
      * @return void
      */
-    public function test_scheme() {
+    public function test_scheme(): void {
         global $CFG;
 
-        $tests = array(
-            array ( // No filter.
+        $tests = [
+            [ // No filter.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '">click here</a>',
-                'after' => 'Please <a href="' . $CFG->wwwroot . '">click here</a>'
-            ),
-            array ( // No href.
+                'after' => 'Please <a href="' . $CFG->wwwroot . '">click here</a>',
+            ],
+            [ // No href.
                 'before' => 'Please <a data-app-link>click here</a>',
-                'after' => 'Please <a data-app-link>click here</a>'
-            ),
-            array ( // Test default scheme with root URL.
+                'after' => 'Please <a data-app-link>click here</a>',
+            ],
+            [ // Test default scheme with root URL.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '" data-app-link>click here</a>',
-                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $CFG->wwwroot . '">click here</a>'
-            ),
-            array ( // Test default scheme with root URL and a different order.
+                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $CFG->wwwroot . '">click here</a>',
+            ],
+            [ // Test default scheme with root URL and a different order.
                 'before' => 'Please <a data-app-link href="' . $CFG->wwwroot . '">click here</a>',
-                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $CFG->wwwroot . '">click here</a>'
-            ),
-            array ( // Test forced scheme with root URL.
+                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $CFG->wwwroot . '">click here</a>',
+            ],
+            [ // Test forced scheme with root URL.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '" data-app-link="forcedscheme">click here</a>',
-                'after' => 'Please <a href="forcedscheme://' . $CFG->wwwroot . '">click here</a>'
-            ),
-            array ( // Test default scheme with a specific URL.
+                'after' => 'Please <a href="forcedscheme://' . $CFG->wwwroot . '">click here</a>',
+            ],
+            [ // Test default scheme with a specific URL.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '/course/view.php?id=2" data-app-link>click here</a>',
                 'after' => 'Please <a href="moodlemobile://' . $CFG->wwwroot . '?redirect=' . $CFG->wwwroot .
-                                '/course/view.php?id=2">click here</a>'
-            ),
-        );
+                                '/course/view.php?id=2">click here</a>',
+            ],
+        ];
 
         foreach ($tests as $test) {
             $this->assertEquals($test['after'], $this->filter->filter($test['before']));
@@ -120,9 +115,10 @@ class filter_applink_testcase extends advanced_testcase {
     /**
      * Test the data-username attribute.
      *
+     * @covers \filter_applink\text_filter::filter
      * @return void
      */
-    public function test_username() {
+    public function test_username(): void {
         global $CFG;
 
         // Create a user and use it.
@@ -133,24 +129,24 @@ class filter_applink_testcase extends advanced_testcase {
         $currentuserwwwroot = preg_replace('/(https?:\/\/)/is', '$1'. $user->username . '@', $CFG->wwwroot);
         $fakeuserwwwroot = preg_replace('/(https?:\/\/)/is', '$1fakeuser@', $CFG->wwwroot);
 
-        $tests = array(
-            array ( // No username.
+        $tests = [
+            [ // No username.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '" data-app-link>click here</a>',
-                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $CFG->wwwroot . '">click here</a>'
-            ),
-            array ( // Username, but no data-app-link.
+                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $CFG->wwwroot . '">click here</a>',
+            ],
+            [ // Username, but no data-app-link.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '" data-username>click here</a>',
                 'after' => 'Please <a href="' . $CFG->wwwroot . '" data-username>click here</a>',
-            ),
-            array ( // Current username.
+            ],
+            [ // Current username.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '" data-app-link data-username>click here</a>',
-                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $currentuserwwwroot . '">click here</a>'
-            ),
-            array ( // Forced username.
+                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $currentuserwwwroot . '">click here</a>',
+            ],
+            [ // Forced username.
                 'before' => 'Please <a href="' . $CFG->wwwroot . '" data-app-link data-username="fakeuser">click here</a>',
-                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $fakeuserwwwroot . '">click here</a>'
-            ),
-        );
+                'after' => 'Please <a href="' . $this->defaultscheme . '://' . $fakeuserwwwroot . '">click here</a>',
+            ],
+        ];
 
         foreach ($tests as $test) {
             $this->assertEquals($test['after'], $this->filter->filter($test['before']));
@@ -160,9 +156,10 @@ class filter_applink_testcase extends advanced_testcase {
     /**
      * Test the filter isn't applied when the request comes from WS.
      *
+     * @covers \filter_applink\text_filter::filter
      * @return void
      */
-    public function test_ws_request() {
+    public function test_ws_request(): void {
         global $CFG;
 
         // Simulate a request that comes from WS.
